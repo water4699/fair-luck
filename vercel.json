@@ -1,0 +1,21 @@
+{
+  "buildCommand": "cd ui && npm run build",
+  "outputDirectory": "ui/dist",
+  "installCommand": "cd ui && npm install",
+  "framework": null,
+  "env": {
+    "VITE_CONTRACT_ADDRESS": "0xFfFC34216aCa5Ed8597AE3B1EEd884C19cfbD9FB"
+  },
+  "headers": [
+    {
+      "source": "/(.*)",
+      "headers": [
+        {
+          "key": "Cross-Origin-Embedder-Policy",
+          "value": "require-corp"
+        }
+      ]
+    }
+  ]
+}
+
