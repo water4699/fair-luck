@@ -1,5 +1,23 @@
-import { Contract } from 'ethers';
-import { FHERaffleABI, FHERaffleLocalABI } from '../abi/FHERaffleABI';
+import { Contract, JsonRpcProvider } from 'ethers';
+import { FHERaffleABI, FHERaffleLocalABI } from '../../abi/FHERaffleABI';
+import { FHERaffleAddresses } from '../../abi/FHERaffleAddresses';
+
+/**
+ * Get provider based on chain ID
+ * @param chainId - The chain ID
+ * @returns JsonRpcProvider instance
+ */
+function getProvider(chainId: number): JsonRpcProvider {
+  if (chainId === 31337) {
+    // Local Hardhat network
+    return new JsonRpcProvider('http://127.0.0.1:8545');
+  }
+  if (chainId === 11155111) {
+    // Sepolia testnet - use public RPC
+    return new JsonRpcProvider('https://rpc.sepolia.org');
+  }
+  throw new Error(`Unsupported chain ID: ${chainId}`);
+}
 
 /**
  * Get contract ABI based on network
@@ -28,8 +46,9 @@ export async function getRaffleCount(chainId: number) {
     throw new Error(`Contract not deployed on chain ${chainId}`);
   }
 
-  // Create a read-only contract (no signer needed for view functions)
-  const contract = new Contract(address, abi);
+  // Create a read-only contract with provider
+  const provider = getProvider(chainId);
+  const contract = new Contract(address, abi, provider);
 
   try {
     const count = await contract.getRaffleCount();
@@ -54,24 +73,48 @@ export async function getRaffleMeta(raffleId: number, chainId: number) {
     throw new Error(`Contract not deployed on chain ${chainId}`);
   }
 
-  const contract = new Contract(address, abi);
+  const provider = getProvider(chainId);
+  const contract = new Contract(address, abi, provider);
 
   try {
     const meta = await contract.getRaffleMeta(raffleId);
-    return {
-      title: meta[0],
-      description: meta[1],
-      creator: meta[2],
-      prizeAmount: meta[3],
-      entryFee: meta[4],
-      maxEntries: Number(meta[5]),
-      currentEntries: Number(meta[6]),
-      expireAt: Number(meta[7]),
-      isActive: meta[8],
-      isDrawn: meta[9],
-      winner: meta[10],
-      createdAt: Number(meta[11]),
-    };
+    console.log('Raw meta from contract:', meta);
+    
+    // FHERaffleLocal returns: creator, title, description, prizeAmount, entryFee, maxEntries, currentEntries, expireAt, isActive, isDrawn, winner, createdAt
+    // FHERaffle returns: creator, title, description, prizeAmount, entryFee, maxEntries, expireAt, currentEntries, isActive, isDrawn, winner, createdAt
+    if (chainId === 31337) {
+      // Local network - FHERaffleLocal order
+      return {
+        creator: meta[0],
+        title: meta[1],
+        description: meta[2],
+        prizeAmount: meta[3],
+        entryFee: meta[4],
+        maxEntries: Number(meta[5]),
+        currentEntries: Number(meta[6]),
+        expireAt: Number(meta[7]),
+        isActive: meta[8],
+        isDrawn: meta[9],
+        winner: meta[10],
+        createdAt: Number(meta[11]),
+      };
+    } else {
+      // Sepolia - FHERaffle order
+      return {
+        creator: meta[0],
+        title: meta[1],
+        description: meta[2],
+        prizeAmount: meta[3],
+        entryFee: meta[4],
+        maxEntries: Number(meta[5]),
+        expireAt: Number(meta[6]),
+        currentEntries: Number(meta[7]),
+        isActive: meta[8],
+        isDrawn: meta[9],
+        winner: meta[10],
+        createdAt: Number(meta[11]),
+      };
+    }
   } catch (error: any) {
     console.error('Error getting raffle metadata:', error);
     throw error;
@@ -93,7 +136,8 @@ export async function hasEntered(raffleId: number, participant: string, chainId:
     throw new Error(`Contract not deployed on chain ${chainId}`);
   }
 
-  const contract = new Contract(address, abi);
+  const provider = getProvider(chainId);
+  const contract = new Contract(address, abi, provider);
 
   try {
     const entered = await contract.hasEntered(raffleId, participant);
@@ -107,7 +151,7 @@ export async function hasEntered(raffleId: number, participant: string, chainId:
 /**
  * Get encrypted/plain entry amount for a specific entry
  * @param raffleId - The raffle ID
- * @param entryIndex - The entry index
+ * @param userAddress - The user address
  * @param chainId - The chain ID
  * @returns Entry amount (bigint)
  */
@@ -119,7 +163,8 @@ export async function getUserEntryAmount(raffleId: number, userAddress: string, 
     throw new Error(`Contract not deployed on chain ${chainId}`);
   }
 
-  const contract = new Contract(address, abi);
+  const provider = getProvider(chainId);
+  const contract = new Contract(address, abi, provider);
 
   try {
     const result = await contract.getEntry(raffleId, userAddress);
@@ -143,17 +188,15 @@ export async function getUserEntryAmount(raffleId: number, userAddress: string, 
  * @returns Contract address or undefined
  */
 export function getContractAddress(chainId: number): string | undefined {
-  // Import addresses
-  const addresses = {
-    31337: '0x5FbDB2315678afecb367f032d93F642f64180aa3', // Will be updated after deployment
-    11155111: '0x0000000000000000000000000000000000000000' // Placeholder, update this after deployment
-  };
-
   // Check if environment variable is set for local contract
   if (chainId === 31337 && import.meta.env.VITE_LOCAL_CONTRACT_ADDRESS) {
     return import.meta.env.VITE_LOCAL_CONTRACT_ADDRESS as string;
   }
 
-  const address = addresses[chainId as keyof typeof addresses];
-  return address;
+  const entry = FHERaffleAddresses[chainId.toString() as keyof typeof FHERaffleAddresses];
+  if (!entry || entry.address === "0x0000000000000000000000000000000000000000") {
+    return undefined;
+  }
+
+  return entry.address;
 }

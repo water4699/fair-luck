@@ -345,3 +345,6 @@ export const FHERaffleABI = {
   ]
 } as const;
 
+// Local version ABI (same interface for local testing)
+export const FHERaffleLocalABI = FHERaffleABI;
+

@@ -1,21 +1,6 @@
 {
-  "buildCommand": "cd ui && npm install && npm run build",
+  "buildCommand": "npm run vercel-build",
   "outputDirectory": "ui/dist",
   "installCommand": "",
-  "framework": null,
-  "env": {
-    "VITE_CONTRACT_ADDRESS": "0xFfFC34216aCa5Ed8597AE3B1EEd884C19cfbD9FB"
-  },
-  "headers": [
-    {
-      "source": "/(.*)",
-      "headers": [
-        {
-          "key": "Cross-Origin-Embedder-Policy",
-          "value": "require-corp"
-        }
-      ]
-    }
-  ]
+  "framework": null
 }
-
