@@ -1,6 +1,5 @@
 {
-  "buildCommand": "npm run vercel-build",
+  "buildCommand": "sh -c 'cd ui && npm install && npm run build'",
   "outputDirectory": "ui/dist",
-  "installCommand": "",
   "framework": null
 }
