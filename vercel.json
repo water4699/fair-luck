@@ -1,5 +1,5 @@
 {
-  "buildCommand": "sh -c 'cd ui && npm install && npm run build'",
-  "outputDirectory": "ui/dist",
+  "buildCommand": "npm install && npm run build",
+  "outputDirectory": "dist",
   "framework": null
 }
