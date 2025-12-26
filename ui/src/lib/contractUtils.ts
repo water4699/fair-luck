@@ -1,5 +1,6 @@
 import { Contract, JsonRpcProvider } from 'ethers';
-import { FHERaffleABI, FHERaffleLocalABI } from '../../abi/FHERaffleABI';
+import { FHERaffleABI } from '../../abi/FHERaffleABI';
+import { FHERaffleLocalABI } from '../../abi/FHERaffleLocalABI';
 import { FHERaffleAddresses } from '../../abi/FHERaffleAddresses';
 
 /**
